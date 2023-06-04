@@ -1,3 +1,4 @@
+// client.js
 window.onload = function () {
   const canvas = document.getElementById("gameCanvas");
   const ctx = canvas.getContext("2d");
@@ -40,6 +41,14 @@ window.onload = function () {
       if (this.y > canvasHeight - this.radius) {
         this.y = canvasHeight - this.radius;
       }
+
+      // Sende die Position des Spielers an den Server
+      socket.send(
+        JSON.stringify({
+          type: "playerPosition",
+          data: { x: this.x, y: this.y },
+        })
+      );
     },
     draw: function () {
       ctx.fillStyle = this.color;
@@ -114,6 +123,51 @@ window.onload = function () {
     mouse.x = event.clientX - rect.left;
     mouse.y = event.clientY - rect.top;
   });
+
+  const socket = new WebSocket("ws://localhost:8080");
+
+  socket.addEventListener("open", function () {
+    console.log("Connected to server.");
+  });
+
+  socket.addEventListener("message", function (message) {
+    const parsedMessage = JSON.parse(message.data);
+
+    switch (parsedMessage.type) {
+      case "playerList":
+        // Aktualisiere die Liste der Spieler
+        updatePlayerList(parsedMessage.data);
+        break;
+      case "playerConnected":
+        // Füge den neuen Spieler zur Liste hinzu
+        addPlayer(parsedMessage.data);
+        break;
+      case "playerDisconnected":
+        // Entferne den abgetrennten Spieler aus der Liste
+        removePlayer(parsedMessage.data);
+        break;
+      case "playerPosition":
+        // Aktualisiere die Position des anderen Spielers
+        updatePlayerPosition(parsedMessage.data);
+        break;
+    }
+  });
+
+  function updatePlayerList(playerList) {
+    // Implementiere die Aktualisierung der Spielerliste in deiner Anwendung
+  }
+
+  function addPlayer(playerId) {
+    // Implementiere das Hinzufügen eines Spielers zur Anwendung
+  }
+
+  function removePlayer(playerId) {
+    // Implementiere das Entfernen eines Spielers aus der Anwendung
+  }
+
+  function updatePlayerPosition(data) {
+    // Implementiere die Aktualisierung der Position des anderen Spielers in der Anwendung
+  }
 
   function spawnEnemy() {
     if (enemyCount < 10 && !player.isGameOver) {
@@ -237,19 +291,9 @@ window.onload = function () {
   }
 
   function gameOver() {
-    ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-
-    ctx.font = "40px Arial";
-    ctx.fillStyle = "white";
-    ctx.textAlign = "center";
-    ctx.fillText("Game Over!", canvasWidth / 2, canvasHeight / 2 - 20);
-    ctx.font = "30px Arial";
-    ctx.fillText(
-      "Final Score: " + player.score,
-      canvasWidth / 2,
-      canvasHeight / 2 + 20
-    );
+    ctx.font = "50px Arial";
+    ctx.fillStyle = "black";
+    ctx.fillText("Game Over", canvasWidth / 2 - 120, canvasHeight / 2);
   }
 
   function checkPlayerProximity(x, y) {
@@ -257,14 +301,13 @@ window.onload = function () {
     const dy = player.y - y;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
-    if (distance < player.radius + 50) {
+    if (distance < player.radius + 100) {
       return true;
     }
 
     return false;
   }
 
-  setInterval(spawnEnemy, 1000);
-
   update();
+  setInterval(spawnEnemy, 2000);
 };
