@@ -1,3 +1,9 @@
+const express = require("express");
+const app = express();
+// const server = require("http").createServer(app);
+// const io = require("socket.io")(server);
+const port = process.env.PORT || 3000;
+app.use(express.static(__dirname + "/public"));
 // server.js
 const WebSocket = require("ws");
 
@@ -67,3 +73,7 @@ function broadcastToOtherPlayers(sender, message) {
 function generatePlayerId() {
   return Math.random().toString(36).substr(2, 9);
 }
+
+app.listen(port, function () {
+  console.log(`App listening on port: ${port}`);
+});
