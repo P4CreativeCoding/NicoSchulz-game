@@ -15,7 +15,12 @@ window.onload = function () {
     score: 0,
     bulletSpeed: 8,
     lastShotTime: 0,
+    isGameOver: false, // Neue Eigenschaft für Game Over-Status
     update: function () {
+      if (this.isGameOver) {
+        return; // Spieler kann sich nicht bewegen, wenn das Spiel vorbei ist
+      }
+
       const dx = mouse.x - this.x;
       const dy = mouse.y - this.y;
       const angle = Math.atan2(dy, dx);
@@ -111,7 +116,7 @@ window.onload = function () {
   });
 
   function spawnEnemy() {
-    if (enemyCount < 10) {
+    if (enemyCount < 10 && !player.isGameOver) {
       let enemyX, enemyY;
       do {
         enemyX = Math.random() * canvasWidth;
@@ -146,6 +151,11 @@ window.onload = function () {
   }
 
   function update() {
+    if (player.isGameOver) {
+      gameOver();
+      return;
+    }
+
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
     ctx.lineWidth = 2;
@@ -185,7 +195,7 @@ window.onload = function () {
       if (checkCollision(player, enemy)) {
         player.health -= 10;
         if (player.health <= 0) {
-          gameOver();
+          player.isGameOver = true;
         }
       }
     });
@@ -227,8 +237,19 @@ window.onload = function () {
   }
 
   function gameOver() {
-    alert("Game Over! Final Score: " + player.score);
-    location.reload();
+    ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+    ctx.font = "40px Arial";
+    ctx.fillStyle = "white";
+    ctx.textAlign = "center";
+    ctx.fillText("Game Over!", canvasWidth / 2, canvasHeight / 2 - 20);
+    ctx.font = "30px Arial";
+    ctx.fillText(
+      "Final Score: " + player.score,
+      canvasWidth / 2,
+      canvasHeight / 2 + 20
+    );
   }
 
   function checkPlayerProximity(x, y) {
