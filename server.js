@@ -12,10 +12,10 @@ io.on("connection", (socket) => {
   console.log("Client connected.");
 
   // Füge den neuen Spieler zur Liste hinzu
-  players.add(socket);
+  players.add(socket.playerId);
 
   // Sende die aktuelle Liste der Spieler an den neuen Spieler
-  const playerList = Array.from(players).map((player) => player.playerId);
+  const playerList = Array.from(players);
   socket.emit(
     "message",
     JSON.stringify({ type: "playerList", data: playerList })
@@ -45,7 +45,7 @@ io.on("connection", (socket) => {
         break;
       case "playerDisconnected":
         // Entferne den Spieler aus der Liste
-        players.delete(socket);
+        players.delete(socket.playerId);
 
         // Sende die Information über den abgetrennten Spieler an alle anderen Spieler
         socket.broadcast.emit(
@@ -63,7 +63,7 @@ io.on("connection", (socket) => {
     console.log("Client disconnected.");
 
     // Entferne den Spieler aus der Liste
-    players.delete(socket);
+    players.delete(socket.playerId);
 
     // Sende die Information über den abgetrennten Spieler an alle anderen Spieler
     socket.broadcast.emit(

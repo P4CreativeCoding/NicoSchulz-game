@@ -147,21 +147,122 @@ window.onload = function () {
   });
 
   function updatePlayerList(playerList) {
-    // Implementiere die Aktualisierung der Spielerliste in deiner Anwendung
+    // Aktualisiere die Liste der Spieler in deiner Anwendung
+    players.length = 0; // Lösche die aktuelle Spielerliste
+
+    // Füge jeden Spieler aus der übergebenen Spielerliste zur lokalen Spielerliste hinzu
+    playerList.forEach(function (playerData) {
+      addPlayer(playerData.id, playerData.x, playerData.y, playerData.color);
+    });
   }
 
-  function addPlayer(playerId) {
-    // Implementiere das Hinzufügen eines Spielers zur Anwendung
+  function addPlayer(playerId, x, y, color) {
+    const newPlayer = {
+      id: playerId,
+      x: x,
+      y: y,
+      radius: 20,
+      color: color,
+      speed: 2,
+      health: 100,
+      score: 0,
+      bulletSpeed: 8,
+      lastShotTime: 0,
+      isGameOver: false,
+      update: function () {
+        if (this.isGameOver) {
+          return;
+        }
+
+        const dx = mouse.x - this.x;
+        const dy = mouse.y - this.y;
+        const angle = Math.atan2(dy, dx);
+        this.x += Math.cos(angle) * this.speed;
+        this.y += Math.sin(angle) * this.speed;
+
+        if (this.x < this.radius) {
+          this.x = this.radius;
+        }
+        if (this.x > canvasWidth - this.radius) {
+          this.x = canvasWidth - this.radius;
+        }
+        if (this.y < this.radius) {
+          this.y = this.radius;
+        }
+        if (this.y > canvasHeight - this.radius) {
+          this.y = canvasHeight - this.radius;
+        }
+
+        socket.emit("playerPosition", { x: this.x, y: this.y });
+      },
+      draw: function () {
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+        ctx.closePath();
+        ctx.fill();
+      },
+      shoot: function () {
+        const currentTime = Date.now();
+        if (currentTime - this.lastShotTime > 200) {
+          const dx = mouse.x - this.x;
+          const dy = mouse.y - this.y;
+          const angle = Math.atan2(dy, dx);
+
+          const bullet = {
+            x: this.x,
+            y: this.y,
+            radius: 5,
+            color: "green",
+            speed: this.bulletSpeed,
+            dx: Math.cos(angle),
+            dy: Math.sin(angle),
+            update: function () {
+              this.x += this.dx * this.speed;
+              this.y += this.dy * this.speed;
+            },
+            draw: function () {
+              ctx.fillStyle = this.color;
+              ctx.beginPath();
+              ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+              ctx.closePath();
+              ctx.fill();
+            },
+          };
+
+          bullets.push(bullet);
+          this.lastShotTime = currentTime;
+        }
+      },
+    };
+
+    players.push(newPlayer);
+    console.log("Neuer Spieler verbunden:", playerId);
   }
 
   function removePlayer(playerId) {
-    // Implementiere das Entfernen eines Spielers aus der Anwendung
+    const index = players.findIndex(function (player) {
+      return player.id === playerId;
+    });
+
+    if (index !== -1) {
+      players.splice(index, 1);
+      console.log("Spieler getrennt:", playerId);
+    }
   }
 
   function updatePlayerPosition(data) {
-    // Implementiere die Aktualisierung der Position des anderen Spielers in der Anwendung
-  }
+    const { playerId, x, y } = data;
 
+    const player = players.find(function (player) {
+      return player.id === playerId;
+    });
+
+    if (player) {
+      player.x = x;
+      player.y = y;
+    }
+  }
   function spawnEnemy() {
     if (enemyCount < 10 && !player.isGameOver) {
       let enemyX, enemyY;
