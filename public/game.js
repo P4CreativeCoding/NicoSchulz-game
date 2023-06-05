@@ -43,12 +43,7 @@ window.onload = function () {
       }
 
       // Sende die Position des Spielers an den Server
-      socket.send(
-        JSON.stringify({
-          type: "playerPosition",
-          data: { x: this.x, y: this.y },
-        })
-      );
+      socket.emit("playerPosition", { x: this.x, y: this.y });
     },
     draw: function () {
       ctx.fillStyle = this.color;
@@ -124,15 +119,13 @@ window.onload = function () {
     mouse.y = event.clientY - rect.top;
   });
 
-  const socket = new WebSocket("ws://localhost:8080");
+  const socket = io(); // Socket.io-Verbindung zum Server herstellen
 
-  socket.addEventListener("open", function () {
+  socket.on("connect", function () {
     console.log("Connected to server.");
   });
 
-  socket.addEventListener("message", function (message) {
-    const parsedMessage = JSON.parse(message.data);
-
+  socket.on("message", function (parsedMessage) {
     switch (parsedMessage.type) {
       case "playerList":
         // Aktualisiere die Liste der Spieler
